@@ -116,27 +116,68 @@ class MinimaxAgent(MultiAgentSearchAgent):
         """
         Returns the minimax action from the current gameState using self.depth
         and self.evaluationFunction.
-
-        Here are some method calls that might be useful when implementing minimax.
-
-        gameState.getLegalActions(agentIndex):
-        Returns a list of legal actions for an agent
-        agentIndex=0 means Pacman, ghosts are >= 1
-
-        gameState.generateSuccessor(agentIndex, action):
-        Returns the successor game state after an agent takes an action
-
-        gameState.getNumAgents():
-        Returns the total number of agents in the game
-
-        gameState.isWin():
-        Returns whether or not the game state is a winning state
-
-        gameState.isLose():
-        Returns whether or not the game state is a losing state
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        # 1. Hàm Điều phối (Dispatcher)
+        def value(state, depth, agentIndex):
+            # Điều kiện dừng: đạt độ sâu tối đa hoặc game kết thúc
+            if depth == self.depth or state.isWin() or state.isLose():
+                return self.evaluationFunction(state)
+
+            # Lượt của Pacman (agent 0) -> Tìm Max
+            if agentIndex == 0:
+                return maxValue(state, depth, agentIndex)
+            # Lượt của Ma (agent > 0) -> Tìm Min
+            else:
+                return minValue(state, depth, agentIndex)
+
+        # 2. Hàm cho Pacman (MAX)
+        def maxValue(state, depth, agentIndex):
+            v = float("-inf")
+            legalActions = state.getLegalActions(agentIndex)
+            
+            for action in legalActions:
+                successor = state.generateSuccessor(agentIndex, action)
+                # Lượt tiếp theo luôn là con ma đầu tiên (agent 1) ở CÙNG độ sâu
+                v = max(v, value(successor, depth, agentIndex + 1))
+            return v
+
+        # 3. Hàm cho các Ghost (MIN)
+        def minValue(state, depth, agentIndex):
+            v = float("inf")
+            legalActions = state.getLegalActions(agentIndex)
+            
+            # Tính toán ai đi tiếp theo
+            nextAgent = agentIndex + 1
+            nextDepth = depth
+            
+            # Nếu đã duyệt xong con ma cuối cùng, quay vòng lại cho Pacman
+            # VÀ tăng độ sâu (depth) lên 1
+            if nextAgent == state.getNumAgents():
+                nextAgent = 0
+                nextDepth += 1
+
+            for action in legalActions:
+                successor = state.generateSuccessor(agentIndex, action)
+                v = min(v, value(successor, nextDepth, nextAgent))
+            return v
+
+        # 4. Tìm kiếm hành động tốt nhất ở Node gốc (Root)
+        bestAction = None
+        maxScore = float("-inf")
+        
+        # Pacman thử từng hành động hợp lệ ở trạng thái hiện tại
+        for action in gameState.getLegalActions(0):
+            successor = gameState.generateSuccessor(0, action)
+            # Gọi đệ quy bắt đầu từ con ma đầu tiên (agent 1) tại độ sâu 0
+            score = value(successor, 0, 1) 
+            
+            # Cập nhật hành động tốt nhất
+            if score > maxScore:
+                maxScore = score
+                bestAction = action
+
+        return bestAction
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
