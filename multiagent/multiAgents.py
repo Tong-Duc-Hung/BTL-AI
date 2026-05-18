@@ -255,8 +255,50 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         All ghosts should be modeled as choosing uniformly at random from their
         legal moves.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        legalActions = gameState.getLegalActions(0)
+
+        # Tinh expectimax value cho tung nuoc di cua Pacman
+        # Bat dau tu agent 1 (ghost dau tien), depth = 0
+        scores = [self.expectimax(gameState.generateSuccessor(0, action), 1, 0)
+                        for action in legalActions]
+
+        # Chon action co score cao nhat
+        bestScore = max(scores)
+        bestAction = legalActions[scores.index(bestScore)]
+        return bestAction
+
+    def expectimax(self, gameState: GameState, agentIndex: int, depth: int):
+        numAgents = gameState.getNumAgents()
+
+        # Dung khi thang hoac thua
+        if gameState.isWin() or gameState.isLose():
+            return self.evaluationFunction(gameState)
+
+        # Dung khi Pacman da di du so luot (depth)
+        if agentIndex == 0 and depth == self.depth:
+            return self.evaluationFunction(gameState)
+
+        # Tinh agent va depth tiep theo
+        nextAgent = (agentIndex + 1) % numAgents
+        nextDepth = depth + 1 if nextAgent == 0 else depth
+
+        # Lay tat ca nuoc di hop le cua agent hien tai
+        legalActions = gameState.getLegalActions(agentIndex)
+
+        # Tinh value cua tung successor
+        successorValues = [
+            self.expectimax(gameState.generateSuccessor(agentIndex, action),
+                            nextAgent, nextDepth)
+            for action in legalActions
+        ]
+
+        # Pacman -> MAX node: chon gia tri lon nhat
+        if agentIndex == 0:
+            return max(successorValues)
+
+        # Ghost -> CHANCE node: tinh trung binh cac gia tri
+        else:
+            return sum(successorValues) / len(successorValues)
 
 def betterEvaluationFunction(currentGameState: GameState):
     """
