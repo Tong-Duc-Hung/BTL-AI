@@ -305,5 +305,48 @@ def betterEvaluationFunction(currentGameState: GameState):
     return score + 1 / (foodLeft + 1) + (1 / (smallestFoodDistance + 1)) * ghostDistanceHeur
     util.raiseNotDefined()
 
+# "***Câu mở rộng***"
+# def betterEvaluationFunction(currentGameState):
+#     from util import manhattanDistance
+
+#     pac = currentGameState.getPacmanPosition()
+#     food = currentGameState.getFood().asList()
+#     ghosts = currentGameState.getGhostStates()
+
+#     score = currentGameState.getScore()
+
+#     # ======================
+#     # FOOD (giữ trọng số chính)
+#     # ======================
+#     if food:
+#         minFoodDist = min(manhattanDistance(pac, f) for f in food)
+#         score += 12.0 / (minFoodDist + 1)
+#         score += 5.0 / len(food)
+
+#     # ======================
+#     # GHOST (GIẢM RỦI RO NHẸ)
+#     # ======================
+#     for g in ghosts:
+#         dist = manhattanDistance(pac, g.getPosition())
+
+#         if g.scaredTimer > 0:
+#             score += 200.0 / (dist + 1)
+#         else:
+#             if dist <= 1:
+#                 return -1e9
+
+#             score -= 20.0 / (dist + 1)
+
+#             if dist <= 2:
+#                 score -= 50
+
+#     actions = currentGameState.getLegalActions(0)
+#     if len(actions) == 1:
+#         score -= 30
+#     elif len(actions) == 2:
+#         score -= 10
+
+#     return score
+
 # Abbreviation
 better = betterEvaluationFunction
