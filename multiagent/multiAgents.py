@@ -75,7 +75,18 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        # 1. Tính toán khoảng cách đến hạt đậu gần nhất (Food Distance)
+        smallestFoodDistance = float('inf')
+        foodList = newFood.asList()
+        for food in foodList:
+            distance = manhattanDistance(newPos, food)
+            smallestFoodDistance = min(smallestFoodDistance, distance)
+
+        # 2. Sử dụng tỉ lệ nghịch (+1 ở mẫu) để tránh phép chia cho 0 và đồng bộ toán học
+        foodLeft = len(foodList)
+        currentScore = successorGameState.getScore()
+        
+        return currentScore + 1.0 / (foodLeft + 1) + 1.0 / (smallestFoodDistance + 1)
 
 def scoreEvaluationFunction(currentGameState: GameState):
     """
@@ -244,50 +255,8 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         All ghosts should be modeled as choosing uniformly at random from their
         legal moves.
         """
-        legalActions = gameState.getLegalActions(0)
-
-        # Tinh expectimax value cho tung nuoc di cua Pacman
-        # Bat dau tu agent 1 (ghost dau tien), depth = 0
-        scores = [self.expectimax(gameState.generateSuccessor(0, action), 1, 0)
-                        for action in legalActions]
-
-        # Chon action co score cao nhat
-        bestScore = max(scores)
-        bestAction = legalActions[scores.index(bestScore)]
-        return bestAction
-
-    def expectimax(self, gameState: GameState, agentIndex: int, depth: int):
-        numAgents = gameState.getNumAgents()
-
-        # Dung khi thang hoac thua
-        if gameState.isWin() or gameState.isLose():
-            return self.evaluationFunction(gameState)
-
-        # Dung khi Pacman da di du so luot (depth)
-        if agentIndex == 0 and depth == self.depth:
-            return self.evaluationFunction(gameState)
-
-        # Tinh agent va depth tiep theo
-        nextAgent = (agentIndex + 1) % numAgents
-        nextDepth = depth + 1 if nextAgent == 0 else depth
-
-        # Lay tat ca nuoc di hop le cua agent hien tai
-        legalActions = gameState.getLegalActions(agentIndex)
-
-        # Tinh value cua tung successor
-        successorValues = [
-            self.expectimax(gameState.generateSuccessor(agentIndex, action),
-                            nextAgent, nextDepth)
-            for action in legalActions
-        ]
-
-        # Pacman -> MAX node: chon gia tri lon nhat
-        if agentIndex == 0:
-            return max(successorValues)
-
-        # Ghost -> CHANCE node: tinh trung binh cac gia tri
-        else:
-            return sum(successorValues) / len(successorValues)
+        "*** YOUR CODE HERE ***"
+        util.raiseNotDefined()
 
 def betterEvaluationFunction(currentGameState: GameState):
     """
@@ -297,6 +266,43 @@ def betterEvaluationFunction(currentGameState: GameState):
     DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
+    # Lấy các thông tin cơ bản từ trạng thái hiện tại
+    score = currentGameState.getScore()
+    foodGrid = currentGameState.getFood()
+    pos = currentGameState.getPacmanPosition() 
+    newGhostStates = currentGameState.getGhostStates()
+    foodLeft = len(foodGrid.asList())
+    numRows = numColumns = 0
+
+    # 1. Tính toán khoảng cách đến hạt đậu gần nhất
+    smallestFoodDistance = float('inf')
+    for food in foodGrid.asList():
+        distance = manhattanDistance(pos, food)
+        smallestFoodDistance = min(smallestFoodDistance, distance)
+
+    # 2. Tính toán khoảng cách và xử lý trạng thái Ma
+    ghostDistance = float('inf')
+    for ghostState in newGhostStates:
+        # Nếu ma ở trạng thái sợ hãi (Scared), ưu tiên tăng điểm thưởng để chủ động săn ma
+        if ghostState.scaredTimer:
+            score += ghostState.scaredTimer / (ghostState.scaredTimer + 10)
+            distance = manhattanDistance(pos, ghostState.getPosition()) / (manhattanDistance(pos, ghostState.getPosition()) + ghostState.scaredTimer)
+        # Nếu ma bình thường, tính khoảng cách để tạo cơ chế phòng thủ
+        else:
+            distance = manhattanDistance(pos, ghostState.getPosition())
+        ghostDistance = min(ghostDistance, distance)
+        
+    # 3. Tính toán kích thước và diện tích của bản đồ 
+    for row in foodGrid:
+        numRows += 1
+    for column in foodGrid[0]:
+        numColumns += 1
+
+    # 4. Chuẩn hóa hệ số áp lực ma dựa trên mật độ không gian
+    ghostDistanceHeur = 1 / (1 - ghostDistance / (numRows * numColumns) / 10)
+
+    # 5. Công thức lượng giá tổng quát cuối cùng 
+    return score + 1 / (foodLeft + 1) + (1 / (smallestFoodDistance + 1)) * ghostDistanceHeur
     util.raiseNotDefined()
 
 # Abbreviation
